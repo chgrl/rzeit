@@ -16,6 +16,12 @@ if(!file.exists(path)) file.create(path)
 
 originalFile <- readLines(path, encoding="UTF-8")
 
-zeit_api_key <- paste0(originalFile, "\nzeit_api_key=", apiKey)
-writeLines(zeit_api_key, path)
+if(length(grep("zeit_api_key=.", originalFile) > 0)) { # update
+  originalFile[tail(grep("zeit_api_key=.", originalFile), 1)] <- paste0("zeit_api_key=", apiKey)
+  writeLines(originalFile, path)
+  message("zeit_api_key updated in ", path)
+} else {  # create
+  writeLines(paste0(originalFile, "\nzeit_api_key=", apiKey), path)
+  message("zeit_api_key= created in ", path)
+}
 }
