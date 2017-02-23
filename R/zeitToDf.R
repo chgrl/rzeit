@@ -30,7 +30,7 @@ zeitToDf <- function(ls, sort = c("uuid", "title", "subtitle", "supertitle", "re
 	
 	# prepare data frame
 	if(!is.null(ls[["matches"]][["release_date"]])) {
-		df <- data.frame(date = as.Date(ls[["matches"]][["release_date"]]))
+		df <- data.frame(release_date = as.Date(ls[["matches"]][["release_date"]]))
 	}
 	if(!is.null(ls[["matches"]][["title"]])) {
 		if(is.null(df)) df <- data.frame(title = ls[["matches"]][["title"]])
