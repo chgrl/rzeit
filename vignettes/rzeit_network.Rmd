@@ -1,13 +1,14 @@
----
-title: "Constructing a network of politicians from newspaper data"
-author: "Jana Blahak & Jan Dix"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Network Vignette}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
+<!--
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{Network Vignette}
+%\VignetteEncoding{UTF-8}
+-->
+
+
+# Constructing a network of politicians from newspaper data
+Jana Blahak, Jan Dix and Christian Graul  
+`r Sys.Date()`  
+
 
 The question we ask in this vignette is the following: Can we use information from newspaper articles to learn about connections between political actors? As actors, we choose members of Angela Merkel's cabinet. DIE ZEIT as a German newspaper and ZEIT Online are particularly strong in reporting about German politics. We assume that if pairs of ministers are mentioned in the same article, this represents some form of connectivity between those politicians and/or their departments. Given this information, we might even learn about the centrality or importance of particular ministries within the government. To do so, we will use basic tools for network visualization.
 
@@ -16,7 +17,8 @@ The question we ask in this vignette is the following: Can we use information fr
 
 We start with loading all required packages, including our `rzeit` package:
 
-```{r basicconsole, warning = FALSE, results = "hide", message = FALSE}
+
+```r
 library(rzeit)
 library(rvest)
 library(plyr)
@@ -29,11 +31,20 @@ library(networkD3)
 In a first step, we gather information on German ministers from [Wikipedia](https://de.wikipedia.org/wiki/Bundesregierung_%28Deutschland%29), which holds a table on their department, name, and party affiliation. We can do so in no time with handy functions from the `rvest` package:
 
 
-```{r Gathering Data from Wikipedia, eval = TRUE}
+
+```r
 ### parse website
 government_url <- "https://de.wikipedia.org/wiki/Bundesregierung_%28Deutschland%29"
 government_parsed <- html(government_url, encoding = "UTF8")
+```
 
+```
+## Warning: 'html' is deprecated.
+## Use 'read_html' instead.
+## See help("Deprecated")
+```
+
+```r
 ### import and tidy table
 government_tables <- html_table(government_parsed)
 government_df <- government_tables[[1]]
@@ -52,13 +63,25 @@ government_df <- government_df[, -1]
 
 As a result, we get the following:
 
-```{r Show table, eval = TRUE}
+
+```r
 head(government_df)
+```
+
+```
+##                 name party partei number
+## 1      Angela Merkel   CDU    CDU      0
+## 2     Sigmar Gabriel   SPD    SPD      1
+## 3   Brigitte Zypries   SPD    SPD      2
+## 4 Thomas de Maizière   CDU    CDU      3
+## 5         Heiko Maas   SPD    SPD      4
+## 6  Wolfgang Schäuble   CDU    CDU      5
 ```
 
 Next, we construct a second data frame, `count_df`, to store pairs of politicians together with corresponding numeric IDs. We will later use this data frame for our API queries with the `zeitGet` function: 
 
-```{r Query data frame, eval = TRUE}
+
+```r
 i <- 1
 from <- NULL
 to <- NULL
@@ -107,8 +130,19 @@ while (i <= nrow(count_df)){
 
 The first rows of the data frame show connections from Angela Merkel to some members of the cabinet:
 
-```{r Show count_df, eval = TRUE}
+
+```r
 head(count_df)
+```
+
+```
+##            from                 to fromNumber toNumber
+## 1 Angela Merkel     Sigmar Gabriel          0        1
+## 2 Angela Merkel   Brigitte Zypries          0        2
+## 3 Angela Merkel Thomas de Maizière          0        3
+## 4 Angela Merkel         Heiko Maas          0        4
+## 5 Angela Merkel  Wolfgang Schäuble          0        5
+## 6 Angela Merkel      Andrea Nahles          0        6
 ```
 
 
@@ -116,7 +150,8 @@ head(count_df)
 
 Now R is prepared to perform the actual queries. For each query, we paste together a pair of names from the `count_df` data frame. When executing the query with `zeitGet`, we specify `limit = 1` because we are only interested in the numbers found in the respective period, and restrict results to the current government period:
 
-```{r Perform queries, eval = TRUE}
+
+```r
 count_df$count <- 0
 i <- 1
 
@@ -135,7 +170,8 @@ while (i <= nrow(count_df)){
 
 Next, we construct a variable `mentioned` that counts the number of articles in which the name of a government member is mentioned:
 
-```{r Counting, eval = TRUE}
+
+```r
 i <- 1
 government_df$mentioned <- 0
 
@@ -169,7 +205,8 @@ while (i <= nrow(government_df)){
 
 For aesthetic reasons, we rescale the `mentioned` variable:
 
-```{r corrections 1, eval = TRUE}
+
+```r
 government_df$mentioned <- round(government_df$mentioned / max(government_df$mentioned) * 500)
 ```
 
@@ -180,7 +217,8 @@ Now, we are ready to visualize the connections.
 
 Before we plot the network, we restrict the sample of `count_df` to those connections that appear more than 10 times, which eases interpretation of the network graph.
 
-```{r corrections 2}
+
+```r
 sample <- count_df[count_df$count > 10,]
 ```
 
@@ -188,7 +226,8 @@ Lastly, we visualize the network using the `forceNetwork` function from the fabu
 
 Feel free to play around a bit with the interactive network plot to develop your own theories of department collaboration in the German government!
 
-```{r Plot network}
+
+```r
 sample <- count_df[count_df$count > mean(count_df$count),]
 
 forceNetwork(Links = sample,
@@ -209,5 +248,7 @@ forceNetwork(Links = sample,
              JS('d3.scale.ordinal()
                 .domain(["SPD", "CSU","CDU"])
                 .range(["#e1001a", "#007dbd" , "#e95d0f"]);'))
-
 ```
+
+<!--html_preserve--><div id="htmlwidget-2298" style="width:800px;height:400px;" class="forceNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2298">{"x":{"links":{"source":[0,0,0,1,8,9],"target":[1,8,9,12,13,13],"value":[3,1,1,1,1,1]},"nodes":{"name":["Angela Merkel","Sigmar Gabriel","Brigitte Zypries","Thomas de Maizière","Heiko Maas","Wolfgang Schäuble","Andrea Nahles","Christian Schmidt","Ursula von der Leyen","Manuela Schwesig","Hermann Gröhe","Alexander Dobrindt","Barbara Hendricks","Johanna Wanka","Gerd Müller","Peter Altmaier"],"group":["CDU","SPD","SPD","CDU","SPD","CDU","SPD","CSU","CDU","SPD","CDU","CSU","SPD","CDU","CSU","CDU"],"nodesize":[500,400,0,0,0,0,0,0,200,200,0,0,100,200,0,0]},"options":{"NodeID":"name","Group":"party","colourScale":"d3.scale.ordinal()\n                .domain([\"SPD\", \"CSU\",\"CDU\"])\n                .range([\"#e1001a\", \"#007dbd\" , \"#e95d0f\"]);","fontSize":7,"fontFamily":"serif","clickTextSize":17.5,"linkDistance":"function(d){return d.value}","linkWidth":"function(d){return d.value / 50}","charge":-120,"linkColour":"#666","opacity":0.8,"zoom":false,"legend":true,"nodesize":true,"radiusCalculation":" Math.sqrt(d.nodesize)+6","bounded":false,"opacityNoHover":0,"clickAction":null}},"evals":["options.linkDistance"],"jsHooks":[]}</script><!--/html_preserve-->

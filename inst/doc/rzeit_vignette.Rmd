@@ -1,13 +1,15 @@
----
-title: "Introductory Vignette for rzeit"
-author: "Jana Blahak & Jan Dix"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Introductory Vignette}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
+<!--
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{Intoductory Vignette}
+%\VignetteEncoding{UTF-8}
+-->
+
+
+# Introductory Vignette for rzeit
+Jana Blahak, Jan Dix and Christian Graul  
+`r Sys.Date()`  
+
+
 This is an introductory vignette to the [`rzeit`](https://github.com/tollpatsch/rzeit) package. The package connects to the [Content API](http://developer.zeit.de/index/) and gives access to articles and corresponding metadata from the DIE ZEIT archive dating back to 1946 and from [ZEIT Online](http://www.zeit.de/). DIE ZEIT is the most widely read German weekly newspaper. The API can be used for free for non-commercial use cases. For the terms of use see http://developer.zeit.de/licence (German only at the moment).
 
 In short the package allows you to:
@@ -23,11 +25,13 @@ The package is made publicly available at [GitHub](https://github.com/tollpatsch
 
 Currently, the package is only available on GitHub. Using the `devtools` package, you can easily install it:
 
-```{r install github, warning = FALSE, results = "hide", message = FALSE, eval = FALSE}
+
+```r
 devtools::install_github("tollpatsch/rzeit")
 ```
 
-```{r loading rzeit, warning = FALSE, results = "hide", message = FALSE, eval = TRUE}
+
+```r
 library(rzeit)
 ```
 
@@ -38,13 +42,15 @@ To be able to work with the API, we have to fetch an API key first. There is no 
 
 With `zeitSetApiKey`, we provide a comfortable function that stores the key in the `R` environment You only have to do this once; the next time `R` is launched this key is automatically available and fetched by the package's functions:
 
-```{r, setKey, warning = FALSE, message = FALSE, eval = FALSE}
+
+```r
 zeitSetApiKey(apiKey = "set_your_api_key_here")
 ```
 
 Next, we can start tapping the API. `zeitGet` represents the core function of the package. Again, because the API Key is stored in the environment, we do not have to pass the key explicitly (but still  could do so using the `api` argument). As an example, we collect articles that include "Merkel" in the article body, headline or byline:
 
-```{r first, eval = TRUE}
+
+```r
 merkel <- zeitGet(q = "Merkel",
                    limit = 100,
                    dateBegin = "2015-01-01",
@@ -55,23 +61,42 @@ Note that for the ease of exposition, we limited the number of collected results
 
 The `results` object is of class `list` and provides information about the articles found as well as the number of hits for a given period. To extract information about the latter, we can draw on the `zeitFrequencies` function, which takes the `results` object as main argument and returns a data frame that includes a continous list of dates in choosen sequences and the related frequencies:  
  
-```{r second, eval = TRUE}
+
+```r
 merkel_freq <- zeitFrequencies(ls = merkel,
                                sort = "day") 
 head(merkel_freq)
 ```
 
+```
+##         date        day dayCount freq freqRel
+## 1 2015-12-01 2015-12-01        1    1      11
+## 2 2015-12-02 2015-12-02        2    4      44
+## 3 2015-12-03 2015-12-03        3    5      56
+## 4 2015-12-04 2015-12-04        4    5      56
+## 5 2015-12-05 2015-12-05        5    1      11
+## 6 2015-12-06 2015-12-06        6    2      22
+```
+
 Apart from these meta data, we can also process substantive article information. The function `zeitToDf` converts the list returned from `zeitGet` into a data frame. Articles can optionally be sorted by any meta data variable:
 
-```{r third, eval = TRUE}
+
+```r
 merkel_articles <- zeitToDf(ls = merkel,
                             sort = "release_date") 
 names(merkel_articles)
 ```
 
+```
+##  [1] "release_date" "title"        "subtitle"     "href"        
+##  [5] "uri"          "uuid"         "supertitle"   "snippet"     
+##  [9] "teaser_text"  "teaser_title"
+```
+
 Finally, we offer the function `zeitPlot` that offers a first inspection of the collected time series. It plots date versus frequencies based on the frequency data frame returned by `zeitFrequencies`:
 
-```{r fourth, eval = FALSE}
+
+```r
 zeitPlot(df = merkel_freq) 
 ```
 
@@ -84,7 +109,8 @@ So much for the package's basic functionality. In the following, we marginally m
 
 Now we search for multiple strings, i.e. articles containing "Bundeskanzlerin" or "Angela Merkel", in her first legislative period as the German chancellor. Furthermore, we set `limit = "all"` to get a comlete list of articles:
 
-```{r multiString1, results = "hide", eval = FALSE}
+
+```r
 merkel_1 <- zeitGet(q = c("Bundeskanzlerin", "Angela Merkel"),
                      limit = "all",
                      dateBegin = "2005-11-22",
@@ -93,7 +119,8 @@ merkel_1 <- zeitGet(q = c("Bundeskanzlerin", "Angela Merkel"),
 
 For the second run we add a "+" to the (second) search term, to force a search for articles containing both, "Bundeskanzlerin" *and* "Angela Merkel":
 
-```{r multiString2, results = "hide", eval = FALSE}
+
+```r
 merkel_2 <- zeitGet(q = c("Bundeskanzlerin", "+Angela Merkel"),
                      limit = "all",
                      dateBegin = "2005-11-22",
@@ -102,7 +129,8 @@ merkel_2 <- zeitGet(q = c("Bundeskanzlerin", "+Angela Merkel"),
 
 Finally we are looking for articles on the exact term "Bundeskanzlerin Angela Merkel":
 
-```{r multiString3, results = "hide", eval = TRUE}
+
+```r
 merkel_3 <- zeitGet(q = "Bundeskanzlerin Angela Merkel",
                      limit = "all",
                      dateBegin = "2005-11-22",
@@ -116,25 +144,34 @@ merkel_3_freq <- zeitFrequencies(ls = merkel_3,
 
 Now, we plot the results of the last request:
 
-```{r, eval = TRUE, fig.width = 7.2, fig.height = 5}
+
+```r
 par(mfrow = c(1, 2))
 zeitPlot(merkel_3_freq, title = "Absolute Frequencies")
 zeitPlot(merkel_3_freq, title = "Relative Frequencies", absolute = FALSE)
 ```
 
+![](rzeit_vignette_files/figure-html/unnamed-chunk-1-1.png) 
+
 There are several parameters to customize the plot. To hide the trend line or the mean line we set the the parameters `trend` or `mean` to `FALSE`:
 
-```{r, eval = TRUE, fig.width = 5, fig.height = 5}
+
+```r
 zeitPlot(merkel_3_freq, title = "Bars only",
 				 trend = FALSE, mean = FALSE)
 ```
 
+![](rzeit_vignette_files/figure-html/unnamed-chunk-2-1.png) 
+
 Colors, line types, line widths and text size and orientation can be changed using optional graphical parameters:
 
-```{r, eval = TRUE, fig.width = 5, fig.height = 5}
+
+```r
 zeitPlot(merkel_3_freq, title = "Color, line type and line width",
 				 col.bar = "#C1C1C1", lty.bar = "longdash", lwd.bar = 3,
 				 col.trend = "#181818", lty.trend = "dotdash", lwd.trend = 2,
 				 col.mean = "#181818", lty.mean = "dotted", lwd.mean = 2,
 				 cex = 1.2)
 ```
+
+![](rzeit_vignette_files/figure-html/unnamed-chunk-3-1.png) 
